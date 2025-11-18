@@ -3,6 +3,8 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
 base = pd.read_csv('Aprendizagem_bayesiana/csv/cov_types.csv')
 
@@ -31,5 +33,16 @@ x_base = x_encoder.fit_transform(x_base)
 
 
 x_treino, x_teste, y_treino, y_teste = train_test_split(x_base, y_base, test_size=0.25, random_state=0)
+
+naive_base = GaussianNB()
+naive_base.fit(x_treino, y_treino)
+
+previsao = naive_base.predict(x_teste)
+
+resultado = accuracy_score(y_teste, previsao)* 100
+
+print(f'O resultado da previsão foi de: {resultado}%')
+
+print(classification_report(y_teste, previsao))
 
 
