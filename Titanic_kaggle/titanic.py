@@ -47,6 +47,8 @@ previsao = modelo.predict(x_teste)
 acuracia = accuracy_score(y_teste, previsao) * 100
 print(f'A acuracia do modelo foi de {acuracia: .2f}')
 
+#comparando Com os dados do gender_submission.csv
+
 # prevendo os dados do CSV test e testando com o gender_submission
 gender_submission = pd.read_csv('Titanic_kaggle/csv/gender_submission.csv') # lendo o CSV
 
