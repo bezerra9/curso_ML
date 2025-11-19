@@ -43,6 +43,8 @@ resultado = accuracy_score(y_teste, previsao)* 100
 
 print(f'O resultado da previsão foi de: {resultado}%')
 
+
+
 print(classification_report(y_teste, previsao))
 
 
