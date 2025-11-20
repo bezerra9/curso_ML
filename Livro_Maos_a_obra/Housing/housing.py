@@ -17,7 +17,7 @@ print(housing.describe())
 # plt.show()
 
 # criar conjunto de testes
-
+# testes criados com o criterio `aleatorio` 
 train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
 print(len(train_set), "train + ", len(test_set), "test")
 
