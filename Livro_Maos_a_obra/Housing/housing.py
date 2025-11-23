@@ -17,12 +17,12 @@ print(housing.describe())
 # plt.show()
 
 # criar conjunto de testes
-# testes criados com o criterio `aleatorio` 
+# testes criados com o criterio `aleatorio`
 train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
 print(len(train_set), "train + ", len(test_set), "test")
 
 
-# rever essa parte do codigo
+# isso aqui ele cria o estrato de uma categoria em relação a renda
 housing['income_cat'] = np.ceil(housing['median_income'] / 1.5).copy()
 # O jeito moderno (sem aviso)
 housing['income_cat'] = housing['income_cat'].where(
@@ -50,6 +50,32 @@ print(strat_test_set["income_cat"].value_counts())
 # 1.0    0.039971
 print(strat_test_set["income_cat"].value_counts() / len(strat_test_set))
 
+#retirar o income_cat
 for set_ in (strat_train_set, strat_test_set):
-  set_.drop("income_cat", axis=1, inplace=True)
+    set_.drop("income_cat", axis=1, inplace=True)
 
+housing = strat_train_set.copy()
+
+# mapa das áreas 
+# housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.1)
+
+# housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.4,s=housing["population"]/100, label="population", figsize=(10,7),c="median_house_value", cmap=plt.get_cmap("jet"), colorbar=True,)
+
+
+# buscando correlações entre os dados
+
+corr_matrix = housing.corr(numeric_only=True)
+
+print(corr_matrix["median_house_value"].sort_values(ascending=False))
+
+# criando novos atributos 
+housing["rooms_per_household"] = housing["total_rooms"]/ housing["households"]
+housing["bedrooms_per_room"] = housing["total_bedrooms"] / housing["total_rooms"]
+housing["populations_per_household"] = housing["population"] / housing["households"]
+
+corr_matrix = housing.corr(numeric_only=True)
+
+print(corr_matrix["median_house_value"].sort_values(ascending=False))
+
+
+# print(strat_train_set.head())""

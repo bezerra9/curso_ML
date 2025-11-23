@@ -26,7 +26,7 @@ y_base = label_cover.fit_transform(y_base)
 
 # tratamento previsores
 # StandardScaler no inicio pois são atributos numericos
-# LabelEncoder no final pois são atributos categóricos
+# OneHotEncoder no final pois são atributos categóricos
 
 x_encoder = ColumnTransformer(transformers=[('StandarScaler', StandardScaler(), slice(0, 10)), ('OneHotEncoder', OneHotEncoder(sparse_output=False), [10, 11])])
 x_base = x_encoder.fit_transform(x_base)
