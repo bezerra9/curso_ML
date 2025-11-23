@@ -78,4 +78,40 @@ corr_matrix = housing.corr(numeric_only=True)
 print(corr_matrix["median_house_value"].sort_values(ascending=False))
 
 
-# print(strat_train_set.head())""
+
+# <h1> preparando os dados para o aprendizado </h1>
+#print(strat_train_set.head())
+#print(housing.head())
+
+# aqui ele cria o previsor housing sem a coluna `resposta` por assim dizer (x)
+housing = strat_train_set.drop("median_house_value", axis=1)
+print(housing.head())
+# aqui ele cria o rotulo `que guarda a resposta` (y)
+housing_labels = strat_train_set["median_house_value"].copy()
+
+#limpando dados, como já visto antes vc pode 
+# - livrar dos faltantes (.dropna())
+# - livra do atributo inteiro (.drop())
+# - define um valor (0, media, intermediaria) (median = housing['totalbedrooms'].median() e depois housing["total_bedrooms"]. fillna(median))
+
+# ah, e existe o imputer (para atributos numericos)
+from sklearn.impute import SimpleImputer
+# cria a instância
+imputer = SimpleImputer(strategy="median")
+# cria uma copia dos dados sem o ocean_proximity
+housing_num = housing.drop("ocean_proximity", axis=1)
+
+#print(housing_num.head())
+
+#ajusta pára os dados de treinamento
+imputer.fit(housing_num)
+
+#aqui ele ta substituindo e guardando dentro de x com os valores já preenchidos
+x = imputer.transform(housing_num)
+
+#transformando de volta para DF
+# housing_tr = pd.DataFrame(x, columns=housing_num.columns)
+# print(housing_tr.head())
+
+
+
