@@ -14,7 +14,7 @@ housing = pd.read_csv('Livro_Maos_a_obra/Housing/csv/housing.csv')
 housing['income_cat'] = np.ceil(housing['median_income'] / 1.5)
 housing['income_cat'] = housing['income_cat'].where(housing['income_cat'] < 5, 5.0)
 
-# 3. Split Estratificado (O jeito moderno que você usou)
+# 3. Split Estratificado
 strat_train_set, strat_test_set = train_test_split(
     housing, test_size=0.2, stratify=housing["income_cat"], random_state=42)
 
