@@ -1,8 +1,14 @@
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.impute import SimpleImputer
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.compose import ColumnTransformer
 
 housing = pd.read_csv('Livro_Maos_a_obra/Housing/csv/housing.csv')
 
@@ -50,13 +56,13 @@ print(strat_test_set["income_cat"].value_counts())
 # 1.0    0.039971
 print(strat_test_set["income_cat"].value_counts() / len(strat_test_set))
 
-#retirar o income_cat
+# retirar o income_cat
 for set_ in (strat_train_set, strat_test_set):
     set_.drop("income_cat", axis=1, inplace=True)
 
 housing = strat_train_set.copy()
 
-# mapa das áreas 
+# mapa das áreas
 # housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.1)
 
 # housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.4,s=housing["population"]/100, label="population", figsize=(10,7),c="median_house_value", cmap=plt.get_cmap("jet"), colorbar=True,)
@@ -68,20 +74,21 @@ corr_matrix = housing.corr(numeric_only=True)
 
 print(corr_matrix["median_house_value"].sort_values(ascending=False))
 
-# criando novos atributos 
-housing["rooms_per_household"] = housing["total_rooms"]/ housing["households"]
-housing["bedrooms_per_room"] = housing["total_bedrooms"] / housing["total_rooms"]
-housing["populations_per_household"] = housing["population"] / housing["households"]
+# criando novos atributos
+housing["rooms_per_household"] = housing["total_rooms"] / housing["households"]
+housing["bedrooms_per_room"] = housing["total_bedrooms"] / \
+    housing["total_rooms"]
+housing["populations_per_household"] = housing["population"] / \
+    housing["households"]
 
 corr_matrix = housing.corr(numeric_only=True)
 
 print(corr_matrix["median_house_value"].sort_values(ascending=False))
 
 
-
 # <h1> preparando os dados para o aprendizado </h1>
-#print(strat_train_set.head())
-#print(housing.head())
+# print(strat_train_set.head())
+# print(housing.head())
 
 # aqui ele cria o previsor housing sem a coluna `resposta` por assim dizer (x)
 housing = strat_train_set.drop("median_house_value", axis=1)
@@ -89,29 +96,84 @@ print(housing.head())
 # aqui ele cria o rotulo `que guarda a resposta` (y)
 housing_labels = strat_train_set["median_house_value"].copy()
 
-#limpando dados, como já visto antes vc pode 
+# limpando dados, como já visto antes vc pode
 # - livrar dos faltantes (.dropna())
 # - livra do atributo inteiro (.drop())
 # - define um valor (0, media, intermediaria) (median = housing['totalbedrooms'].median() e depois housing["total_bedrooms"]. fillna(median))
 
 # ah, e existe o imputer (para atributos numericos)
-from sklearn.impute import SimpleImputer
 # cria a instância
 imputer = SimpleImputer(strategy="median")
 # cria uma copia dos dados sem o ocean_proximity
 housing_num = housing.drop("ocean_proximity", axis=1)
 
-#print(housing_num.head())
+# print(housing_num.head())
 
-#ajusta pára os dados de treinamento
+# ajusta pára os dados de treinamento
 imputer.fit(housing_num)
 
-#aqui ele ta substituindo e guardando dentro de x com os valores já preenchidos
+# aqui ele ta substituindo e guardando dentro de x com os valores já preenchidos
 x = imputer.transform(housing_num)
 
-#transformando de volta para DF
+# transformando de volta para DF
 # housing_tr = pd.DataFrame(x, columns=housing_num.columns)
 # print(housing_tr.head())
 
+# Manipulando atributos categoricos
+housing_cat = housing[['ocean_proximity']]
+
+encoder = OneHotEncoder()
+
+housing_cat_encoder = encoder.fit_transform(housing_cat)
+print(housing_cat_encoder)  # retorna sparse matrix
+print(encoder.categories_)
+
+# Customizando transformadores
+rooms_ix, bedrooms_ix, population_ix, household_ix = 3, 4, 5, 6
 
 
+class CombinedAttributesAdder(BaseEstimator, TransformerMixin):
+    def __init__(self, add_bedrooms_per_room=True):  # no *args or **kargs
+        self.add_bedrooms_per_room = add_bedrooms_per_room
+
+    def fit(self, X, y=None):
+        return self  # nada a fazer aqui, ele não precisa aprender nada
+
+    def transform(self, X):
+        # Calcula: Cômodos por Família
+        rooms_per_household = X[:, rooms_ix] / X[:, household_ix]
+        # Calcula: População por Família
+        population_per_household = X[:, population_ix] / X[:, household_ix]
+        if self.add_bedrooms_per_room:
+            # Calcula: Quartos por Cômodo
+            bedrooms_per_room = X[:, bedrooms_ix] / X[:, rooms_ix]
+            # Retorna: Dados Originais + 3 novas colunas
+            return np.c_[X, rooms_per_household, population_per_household, bedrooms_per_room]
+        else:
+            # Retorna: Dados Originais + 2 novas colunas
+            return np.c_[X, rooms_per_household, population_per_household]
+
+
+attr_adder = CombinedAttributesAdder(add_bedrooms_per_room=False)
+housing_extra_attribs = attr_adder.transform(housing.values)
+
+# print(housing_extra_attribs)
+
+# pipelines de transformação
+num_attribs = list(housing_num)
+cat_attribs = ['ocean_proximity']
+
+print(housing.head())
+
+num_pipeline = Pipeline([('imputer', SimpleImputer(strategy="median")), (
+    'attribs_add', CombinedAttributesAdder()), ('std_scaler', StandardScaler())])
+
+cat_pipeline = Pipeline([('imputer', SimpleImputer(
+    strategy='most_frequent')), ('one_hot', OneHotEncoder())])
+
+full_pipeline = ColumnTransformer(
+    [('num', num_pipeline, num_attribs), ('cat', cat_pipeline, cat_attribs)])
+
+housing_prepared = full_pipeline.fit_transform(housing)
+
+print(housing_prepared)
