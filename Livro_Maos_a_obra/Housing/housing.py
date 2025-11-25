@@ -1,3 +1,4 @@
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score
 from sklearn.tree import DecisionTreeRegressor
@@ -233,3 +234,21 @@ display_scores(forest_rmse_scores)
 
 joblib.dump(tree_reg, "meu_modelo_arvore.pkl")
 modelo_carregado = joblib.load("meu_modelo_arvore.pkl") """
+
+
+param_grid = [
+    {'n_estimators': [3, 10, 30], 'max_features': [2, 4, 6, 8]},
+    {'bootstrap': [False], 'n_estimators': [3, 10], 'max_features': [2, 3, 4]}
+]
+
+grid_search = GridSearchCV(forest_reg, param_grid,
+                           cv=5, scoring='neg_mean_squared_error')
+
+grid_search.fit(housing_prepared, housing_labels)
+
+print(grid_search.best_params_)
+
+cvres = grid_search.cv_results_
+
+for mean_score, params in zip(cvres['mean_test_score'], cvres['params']):
+    print(np.sqrt(-mean_score), params)
