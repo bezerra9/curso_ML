@@ -252,3 +252,13 @@ cvres = grid_search.cv_results_
 
 for mean_score, params in zip(cvres['mean_test_score'], cvres['params']):
     print(np.sqrt(-mean_score), params)
+
+#analise os melhores modelos e seus erros
+feature_importances = grid_search.best_estimator_.feature_importances_
+
+extra_attribs = ['rooms_per_hhould', 'pop_per_hhold', 'bedrooms_per_room']
+cat_encoder = cat_pipeline.named_steps['one_hot']
+cat_one_hot_attribs = list(cat_encoder.categories_[0])
+attributes = num_attribs + extra_attribs + cat_one_hot_attribs
+
+print(sorted(zip(feature_importances, attributes), reverse=True))
