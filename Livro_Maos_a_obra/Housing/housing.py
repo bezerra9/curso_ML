@@ -1,3 +1,8 @@
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -177,3 +182,54 @@ full_pipeline = ColumnTransformer(
 housing_prepared = full_pipeline.fit_transform(housing)
 
 print(housing_prepared)
+
+
+# <h2> Selecione e Treine um modelo <\h2>
+
+lin_reg = LinearRegression()
+
+lin_reg.fit(housing_prepared, housing_labels)
+
+some_data = housing.iloc[:5]
+some_labels = housing_labels.iloc[:5]
+some_data_prepared = full_pipeline.transform(some_data)
+""" print(f'predictions: {lin_reg.predict(some_data_prepared)}')
+print(f'labels: {list(some_labels)}') """
+
+tree_reg = DecisionTreeRegressor()
+tree_reg.fit(housing_prepared, housing_labels)
+
+housing_predictions = tree_reg.predict(housing_prepared)
+
+tree_mse = mean_squared_error(housing_labels, housing_predictions)
+tree_mse = np.sqrt(tree_mse)
+print(tree_mse)  # provavelmente ele se sobreajustou mal aos dados
+
+
+scores = cross_val_score(tree_reg, housing_prepared,
+                         housing_labels, scoring='neg_mean_squared_error', cv=10)
+tree_rmse_scores = np.sqrt(-scores)
+
+lin_scores = cross_val_score(
+    lin_reg, housing_prepared, housing_labels, scoring='neg_mean_squared_error', cv=10)
+lin_rmse_scores = np.sqrt(-lin_scores)
+
+
+def display_scores(scores):
+    print(f'Scores: {scores}')
+    print(f'Mean: {scores.mean()}')
+    print(f'Standard deviation {scores.std()}')
+
+
+forest_reg = RandomForestRegressor()
+forest_reg.fit(housing_prepared, housing_labels)
+forest_scores = cross_val_score(
+    forest_reg, housing_prepared, housing_labels, scoring="neg_mean_squared_error", cv=10)
+forest_rmse_scores = np.sqrt(-forest_scores)
+
+display_scores(forest_rmse_scores)
+
+""" import joblib
+
+joblib.dump(tree_reg, "meu_modelo_arvore.pkl")
+modelo_carregado = joblib.load("meu_modelo_arvore.pkl") """
